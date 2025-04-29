@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Innovación en el Cumplimiento de Obligaciones con el IESS</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #8cf0b9, #84c1f0);
+      margin: 0;
+      padding: 20px;
+      color: #17284a;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    h1 {
+      color: #131cbe;
+    }
+    h2 {
+      color: #0b6031;
+    }
+    form, .section, .result, .gamification {
+      background: rgba(208, 209, 209, 0.555);
+      color: #5f1717;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.1);
+      max-width: 700px;
+      margin: 20px auto;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+      font-size: 16px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #540b85;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    .button {
+      background-color: #ebda5c;
+      color: rgb(18, 9, 9);
+      padding: 12px;
+      border: none;
+      border-radius: 5px;
+      font-size: 18px;
+      cursor: pointer;
+      margin-top: 20px;
+      width: 100%;
+    }
+    .button:hover {
+      background-color: #131f15;
+      color: white;
+    }
+    .chatbot-section {
+      background: #e196bf;
+      padding: 30px;
+      margin-top: 40px;
+      border-radius: 10px;
+      text-align: center;
+      max-width: 700px;
+      margin: 40px auto;
+    }
+    .chatbot-section img {
+      width: 200px;
+      margin-top: 20px;
+      border-radius: 10px;
+    }
+    footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 14px;
+      color: #1f142e;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Innovación en el Cumplimiento de Obligaciones con el IESS</h1>
+
+<h2>Formulario de Cálculo</h2>
+
+<form id="formulario">
+  <label>Nombre:</label>
+  <input type="text" id="nombre" required>
+
+  <label>Cédula:</label>
+  <input type="text" id="cedula" required maxlength="10">
+
+  <label>Sexo:</label>
+  <select id="sexo">
+    <option value="hombre">Hombre</option>
+    <option value="mujer">Mujer</option>
+  </select>
+
+  <label>¿Está embarazada? (solo mujeres):</label>
+  <select id="embarazo">
+    <option value="no">No</option>
+    <option value="si">Sí</option>
+  </select>
+
+  <label>Edad:</label>
+  <input type="number" id="edad" min="15" max="100" value="30">
+
+  <label>¿Tiene discapacidad?</label>
+  <select id="discapacidad">
+    <option value="no">No</option>
+    <option value="si">Sí</option>
+  </select>
+
+  <label>Tiempo de Servicio (años):</label>
+  <input type="number" id="tiempoServicio" min="0" value="5">
+
+  <label>Salario Mensual ($):</label>
+  <input type="number" id="salario" min="0" value="470">
+
+  <label>Tipo de Aportación:</label>
+  <select id="tipoAportacion">
+    <option value="trabajador">Trabajador</option>
+    <option value="empleador">Empleador</option>
+    <option value="voluntario">Afiliado Voluntario</option>
+  </select>
+
+  <button type="button" class="button" onclick="calcular()">Calcular</button>
+</form>
+
+<div class="result" id="resultado"></div>
+
+<div class="section">
+  <h2>Agendar Pago</h2>
+  <input type="date" id="fechaPago">
+  <button type="button" class="button" onclick="agendarPago()">Agendar</button>
+</div>
+
+<div class="section">
+  <h2>Hacer Consulta</h2>
+  <textarea id="consulta" rows="4"></textarea>
+  <button type="button" class="button" onclick="hacerConsulta()">Enviar Consulta</button>
+</div>
+
+<div class="gamification">
+  <h2>Tu Progreso</h2>
+  <p><strong>Puntos acumulados:</strong> <span id="puntos">0</span></p>
+  <p><strong>Insignias obtenidas:</strong> <span id="insignias">Ninguna</span></p>
+  <p><strong>Ranking de Cumplimiento:</strong></p>
+  <ol id="ranking"></ol>
+</div>
+
+<div class="chatbot-section">
+  <h2>Asistente Virtual</h2>
+  <p>¿Tienes dudas? Nuestro chatbot está aquí para ayudarte.</p>
+  <img src="https://cdn-icons-png.flaticon.com/512/4712/4712027.png" alt="Chatbot Asistente">
+</div>
+
+<footer>
+  © 2025 Innovación IESS CL
+</footer>
+
+<script>
+let puntos = 0;
+let calculosRealizados = 0;
+let pagosAgendadosAntesDel10 = false;
+let usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
+
+function actualizarLocalStorage(nombreUsuario) {
+  let usuarioExistente = usuarios.find(u => u.nombre === nombreUsuario);
+  if (usuarioExistente) {
+    usuarioExistente.puntos = puntos;
+  } else {
+    usuarios.push({ nombre: nombreUsuario, puntos });
+  }
+  usuarios.sort((a, b) => b.puntos - a.puntos);
+  localStorage.setItem('usuarios', JSON.stringify(usuarios));
+  actualizarRanking();
+}
+
+function actualizarRanking() {
+  const ranking = document.getElementById('ranking');
+  ranking.innerHTML = '';
+  usuarios.forEach((u, index) => {
+    const li = document.createElement('li');
+    li.innerHTML = `${index + 1}. ${u.nombre} - ${u.puntos} puntos`;
+    ranking.appendChild(li);
+  });
+}
+
+function sumarPuntos(cantidad) {
+  puntos += cantidad;
+  document.getElementById('puntos').innerText = puntos;
+  actualizarInsignias();
+}
+
+function actualizarInsignias() {
+  let insignias = [];
+  if (pagosAgendadosAntesDel10) {
+    insignias.push("Cumplidor Responsable");
+  }
+  if (calculosRealizados >= 5) {
+    insignias.push("Calculador Experto");
+  }
+  document.getElementById('insignias').innerText = insignias.length > 0 ? insignias.join(", ") : "Ninguna";
+}
+
+function calcular() {
+  const nombre = document.getElementById('nombre').value.trim();
+  if (!nombre) {
+    alert("Por favor ingresa tu nombre para registrar los puntos.");
+    return;
+  }
+
+  const salario = parseFloat(document.getElementById('salario').value);
+  const tiempoServicio = parseInt(document.getElementById('tiempoServicio').value);
+  const sexo = document.getElementById('sexo').value;
+  const embarazo = document.getElementById('embarazo').value;
+  const discapacidad = document.getElementById('discapacidad').value;
+  const tipoAportacion = document.getElementById('tipoAportacion').value;
+
+  let aportePersonal = 0;
+  let aportePatronal = salario * 0.1115;
+  if (tipoAportacion === "trabajador") {
+    aportePersonal = salario * 0.0945;
+  } else if (tipoAportacion === "voluntario") {
+    aportePersonal = salario * 0.2050;
+    aportePatronal = 0;
+  } else if (tipoAportacion === "empleador") {
+    aportePersonal = 0;
+  }
+  if (discapacidad === "si") {
+    aportePersonal *= 0.5;
+    aportePatronal *= 0.5;
+  }
+
+  const aporteTotal = aportePersonal + aportePatronal;
+  const pension = ((salario * tiempoServicio) / 30).toFixed(2);
+  const cesantia = salario * 0.03 * tiempoServicio * 12;
+  const subsidioEnfermedad = (salario * 0.75).toFixed(2);
+  const subsidioMaternidad = (salario * 0.75).toFixed(2);
+
+  let resultadoHTML = `<strong>Resultados:</strong><br><br>
+    ➔ Aporte Personal: $${aportePersonal.toFixed(2)}<br>
+    ➔ Aporte Patronal (Empleador): $${aportePatronal.toFixed(2)}<br>
+    ➔ Aporte Total: $${aporteTotal.toFixed(2)}<br><br>
+    ➔ Estimación de Pensión Mensual: $${pension}<br>
+    ➔ Cesantía Estimada Acumulada: $${cesantia.toFixed(2)}<br><br>
+    ➔ Subsidio por Enfermedad (75% salario): $${subsidioEnfermedad}<br>`;
+
+  if (sexo === "mujer" && embarazo === "si") {
+    resultadoHTML += `➔ Subsidio por Maternidad (75% salario): $${subsidioMaternidad}<br>`;
+  }
+
+  document.getElementById('resultado').innerHTML = resultadoHTML;
+
+  calculosRealizados++;
+  sumarPuntos(10);
+  actualizarLocalStorage(nombre);
+}
+
+function agendarPago() {
+  const fecha = document.getElementById('fechaPago').value;
+  const nombre = document.getElementById('nombre').value.trim();
+  if (fecha && nombre) {
+    const dia = parseInt(fecha.split("-")[2]);
+    if (dia <= 10) {
+      pagosAgendadosAntesDel10 = true;
+    }
+    alert("Pago agendado para el: " + fecha);
+    sumarPuntos(15);
+    actualizarLocalStorage(nombre);
+  } else {
+    alert("Completa tu nombre y la fecha para agendar el pago.");
+  }
+}
+
+function hacerConsulta() {
+  const consulta = document.getElementById('consulta').value;
+  const nombre = document.getElementById('nombre').value.trim();
+  if (consulta.trim() && nombre) {
+    alert("Consulta enviada:\n\n" + consulta);
+    sumarPuntos(5);
+    actualizarLocalStorage(nombre);
+  } else {
+    alert("Completa tu nombre y la consulta antes de enviar.");
+  }
+}
+
+window.onload = () => {
+  actualizarRanking();
+};
+</script>
+
+</body>
+</html>
